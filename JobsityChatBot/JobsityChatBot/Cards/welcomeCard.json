@@ -1,0 +1,46 @@
+{
+  "$schema": "http://adaptivecards.io/schemas/adaptive-card.json",
+  "type": "AdaptiveCard",
+  "version": "1.0",
+  "body": [
+    {
+      "type": "Image",
+      "url": "https://www.jobsity.com/assets/img/logo/brand-jobsity.svg",
+      "size": "stretch"
+    },
+    {
+      "type": "TextBlock",
+      "spacing": "medium",
+      "size": "default",
+      "weight": "bolder",
+      "text": "Welcome to Jobsity Chat!",
+      "wrap": true,
+      "maxLines": 0
+    },
+    {
+      "type": "TextBlock",
+      "size": "default",
+      "isSubtle": true,
+      "text": "You can ask for stocks using the command: /stock=stock_code",
+      "wrap": true,
+      "maxLines": 0
+    }
+  ],
+  "actions": [
+    {
+      "type": "Action.OpenUrl",
+      "title": "Watch U.S. Stocks",
+      "url": "https://stooq.com/t/?i=518"
+    },
+    {
+      "type": "Action.OpenUrl",
+      "title": "Watch UK Stocks",
+      "url": "https://stooq.com/t/?i=610"
+    },
+    {
+      "type": "Action.OpenUrl",
+      "title": "Watch Japan Stocks",
+      "url": "https://stooq.com/t/?i=519"
+    }
+  ]
+}
