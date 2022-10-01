@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.3.32825.248
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JobsityChatAngular", "JobsityChatAngular\JobsityChatAngular.csproj", "{A258BC5E-3C2E-4953-9A62-C489EEB65325}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A258BC5E-3C2E-4953-9A62-C489EEB65325}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A258BC5E-3C2E-4953-9A62-C489EEB65325}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A258BC5E-3C2E-4953-9A62-C489EEB65325}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A258BC5E-3C2E-4953-9A62-C489EEB65325}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {3BE0CD5A-9212-42A3-8BFC-27DFD718A354}
+	EndGlobalSection
+EndGlobal
