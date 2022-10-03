@@ -14,6 +14,7 @@ using Azure.Messaging.ServiceBus;
 using JobsityChatBotFunction.Exceptions;
 using System.Text.RegularExpressions;
 using System.Collections;
+using JobsityChatBotFunction.Helpers;
 
 namespace JobsityChatBotFunction
 {
@@ -22,49 +23,6 @@ namespace JobsityChatBotFunction
     /// </summary>
     public class JobsityChatBotFunction
     {
-        /// <summary>
-        /// Get the stock name from the user command
-        /// </summary>
-        /// <param name="message">User command</param>
-        /// <returns>Stock name</returns>
-        private static string GetStockName(string message)
-        {
-            string[] parts = message.Split("=");
-            if (parts.Length >= 2)
-            {
-                foreach(string word in parts)
-                {
-                    if (Regex.Match(word, "\\w+[.]\\w+").Success)
-                    {
-                        return word;
-                    }
-                }
-                throw new IncorrectSintaxException();
-            }
-            throw new IncorrectSintaxException();
-        }
-
-        /// <summary>
-        /// Ask stooq.com for a stock value
-        /// </summary>
-        /// <param name="stock">Stock name</param>
-        /// <returns></returns>
-        /// <exception cref="StooqUnavailableException">Http exception</exception>
-        private static async Task<MemoryStream> GetStockValues(string stock)
-        {
-            Dictionary<string, string> values = new();
-            FormUrlEncodedContent content = new(values);
-            try
-            {
-                using HttpResponseMessage response = await new HttpClient().PostAsync($"https://stooq.com/q/l/?s={stock}&f=sd2t2ohlcv&h&e=csv", content);
-                byte[] responseContent = await response.Content.ReadAsByteArrayAsync();
-                return new MemoryStream(responseContent);
-            }
-            catch (Exception)
-            {
-                throw new StooqUnavailableException();
-            }
-        }
 
         /// <summary>
         /// Post the bot response (stock value) to an Azure Service Bus queue
@@ -97,19 +55,6 @@ namespace JobsityChatBotFunction
         }
 
         /// <summary>
-        /// Calls the stooq.com API and parse the CSV to a Stock object
-        /// </summary>
-        /// <param name="stock">Stock name</param>
-        /// <returns>Stock object</returns>
-        private static Stock GetStockFromApi(string stock)
-        {
-            using StreamReader reader = new(GetStockValues(stock).Result);
-            using CsvReader csv = new(reader, CultureInfo.InvariantCulture);
-            IEnumerable<Stock> records = csv.GetRecords<Stock>();
-            return records.FirstOrDefault(p => p.Symbol.ToLower() == stock);
-        }
-
-        /// <summary>
         /// Azure function method
         /// </summary>
         /// <param name="myQueueItem">Value received from the Azure ServiceBus trigger</param>
@@ -122,8 +67,8 @@ namespace JobsityChatBotFunction
             string stock = "";
             try
             {
-                stock = GetStockName(myQueueItem);
-                Stock record = GetStockFromApi(stock);
+                stock = JobsityChatBotHelper.GetStockName(myQueueItem);
+                Stock record = JobsityChatBotHelper.GetStockFromApi(stock, new HttpClient());
                 double average = (record.High + record.Low) / 2;
                 PostMessageToServiceBus($"{record.Symbol} quote is ${average} per share");
             }

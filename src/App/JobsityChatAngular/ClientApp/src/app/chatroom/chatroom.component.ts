@@ -5,10 +5,42 @@ import { HubConnection, HubConnectionBuilder } from "@microsoft/signalr";
 import { BehaviorSubject, Observable } from "rxjs";
 import { map } from "rxjs/operators";
 import { AuthorizeService } from "../../api-authorization/authorize.service";
+import { NewMessage } from "../interfaces/newmessage.iterface";
 
+/**
+ * Chatroom component
+ */
 @Component({
   selector: "app-chatroom-component",
-  templateUrl: "./chatroom.component.html"
+  template: `
+    <div *ngIf="!joined">
+      <strong>Create a group</strong>
+      <div class="form-group row mb-2">
+        <label class="col-form-label col-md-3">Group name</label>
+        <div class="col-md-9">
+          <input type="text" class="form-control" name="groupName" [(ngModel)]="groupName" />
+        </div>
+      </div>
+      <div class="form-group row">
+        <div class="col-md-9 offset-3">
+          <button type="button" class="btn btn-primary" (click)="join()">
+            Enter
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="joined">
+      <div id="chat">
+        <div *ngFor="let message of (conversationSubject | async)">
+          <div><strong>{{message.date.toLocaleTimeString()}} - {{message.userName}}:</strong> {{message.message}}</div>
+        </div>
+      </div>
+      <input class="form-control mb-1" type="text" [(ngModel)]="messageToSend" name="messageToSend" />
+      <button class="btn btn-primary me-2" (click)="sendMessage()">Send</button>
+      <button class="btn btn-secondary" (click)="leave()">Leave</button>
+    </div>
+  `
 })
 export class ChatroomComponent implements OnInit, OnDestroy {
   private userName = "";
@@ -28,15 +60,8 @@ export class ChatroomComponent implements OnInit, OnDestroy {
   private connection: HubConnection;
 
   constructor(private authorizeService: AuthorizeService) {
-    //let apiBaseUrl = "https://localhost:7234";
-    let apiBaseUrl = "https://jobsitychatangular20221002225745.azurewebsites.net";
-    //let apiBaseUrl = "https://jobsitychatsignalr.service.signalr.net";
+    let apiBaseUrl = "https://localhost:7234";
     this.connection = new HubConnectionBuilder()
-      //.withUrl("https://localhost:7234/jobsitychatsignalr")
-      //.withUrl(`${apiBaseUrl}/api`, {
-      //  skipNegotiation: true,
-      //  transport: signalR.HttpTransportType.WebSockets
-      //})
       .withUrl(`${apiBaseUrl}/chatroom`)
       .configureLogging(signalR.LogLevel.Information)
       .build();
@@ -139,11 +164,4 @@ export class ChatroomComponent implements OnInit, OnDestroy {
       message: message
     });
   }
-}
-
-interface NewMessage {
-  date: Date;
-  userName: string;
-  message: string;
-  groupName?: string;
 }

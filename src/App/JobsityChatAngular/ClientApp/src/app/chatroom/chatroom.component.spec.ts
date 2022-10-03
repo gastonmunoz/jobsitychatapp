@@ -2,7 +2,7 @@ import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ChatroomComponent } from './chatroom.component';
 
-describe('CounterComponent', () => {
+describe('ChatroomComponent', () => {
   let fixture: ComponentFixture<ChatroomComponent>;
 
   beforeEach(async(() => {
@@ -17,18 +17,15 @@ describe('CounterComponent', () => {
     fixture.detectChanges();
   });
 
-  it('should display a title', async(() => {
-    const titleText = fixture.nativeElement.querySelector('h1').textContent;
-    expect(titleText).toEqual('Counter');
+  it('should display a join group step', async(() => {
+    const titleText = fixture.nativeElement.querySelector('strong').textContent;
+    expect(titleText).toEqual('Create a group');
   }));
 
-  it('should start with count 0, then increments by 1 when clicked', async(() => {
-    const countElement = fixture.nativeElement.querySelector('strong');
-    expect(countElement.textContent).toEqual('0');
-
-    const incrementButton = fixture.nativeElement.querySelector('button');
-    incrementButton.click();
+  it('should start with Bienvenido', async(() => {
+    fixture.componentInstance.joined = true;
     fixture.detectChanges();
-    expect(countElement.textContent).toEqual('1');
+    const chatElement = fixture.nativeElement.querySelector('#chat');
+    expect(chatElement.textContent).toContain('Bienvenido');
   }));
 });

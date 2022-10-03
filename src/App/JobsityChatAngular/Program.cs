@@ -39,7 +39,7 @@ namespace JobsityChatAngular
             }).AddHubOptions<JobsityChatHub>(p =>
             {
                 p.MaximumReceiveMessageSize = null;
-            });/*.AddAzureSignalR("Endpoint=https://jobsitychatsignalr.service.signalr.net;AccessKey=3MK68cSjeK2zMZjjqB+kj43fkmpHUCx7CDDiTjiCXL8=;Version=1.0;")*/;
+            });
 
             WebApplication app = builder.Build();
 
@@ -49,7 +49,6 @@ namespace JobsityChatAngular
             }
             else
             {
-                // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
 
@@ -65,8 +64,6 @@ namespace JobsityChatAngular
                     .AllowAnyMethod()
                     .AllowCredentials()
                     .WithOrigins("https://localhost:7234", "https://localhost:44477");
-                //.WithOrigins("https://jobsitychatangular20221002225745.azurewebsites.net:7234", "https://jobsitychatangular20221002225745.azurewebsites.net:44477");
-
             });
 
             app.UseAuthorization();
