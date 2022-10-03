@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.SignalR;
+﻿using JobsityChatAngular.Helpers;
+using Microsoft.AspNetCore.SignalR;
 
 namespace JobsityChatAngular.Hubs
 {
@@ -19,9 +20,13 @@ namespace JobsityChatAngular.Hubs
 
         public async Task SendMessage(NewMessage message)
         {
+            if (message.Message.Trim().StartsWith("/stock="))
+            {
+                JobsityChatBotHelper.ProcessMessage(message.Message);
+            }
             await Clients.Group(message.GroupName).SendAsync("NewMessage", message);
         }
 
-        public record NewMessage(string UserName, string Message, string GroupName);
+        public record NewMessage(DateTime date, string UserName, string Message, string GroupName);
     }
 }

@@ -6,12 +6,6 @@
       <input type="text" class="form-control" name="groupName" [(ngModel)]="groupName" />
     </div>
   </div>
-  <div class="form-group row mb-2">
-    <label class="col-form-label col-md-3">User name</label>
-    <div class="col-md-9">
-      <input type="text" class="form-control" name="userName" [(ngModel)]="userName" />
-    </div>
-  </div>
   <div class="form-group row">
     <div class="col-md-9 offset-3">
       <button type="button" class="btn btn-primary" (click)="join()">
@@ -23,8 +17,8 @@
 
 <div *ngIf="joined">
   <div id="chat">
-    <div *ngFor="let message of conversation">
-      <div><strong>{{message.userName}}:</strong> {{message.message}}</div>
+    <div *ngFor="let message of (conversationSubject | async)">
+      <div><strong>{{message.date.toLocaleTimeString()}} - {{message.userName}}:</strong> {{message.message}}</div>
     </div>
   </div>
   <input class="form-control mb-1" type="text" [(ngModel)]="messageToSend" name="messageToSend" />
