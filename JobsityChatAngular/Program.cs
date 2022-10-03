@@ -2,6 +2,7 @@ using JobsityChatAngular.Data;
 using JobsityChatAngular.Hubs;
 using JobsityChatAngular.Models;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 
 namespace JobsityChatAngular
@@ -32,7 +33,13 @@ namespace JobsityChatAngular
 
             builder.Services.AddControllersWithViews();
             builder.Services.AddRazorPages();
-            builder.Services.AddSignalR();
+            builder.Services.AddSignalR(o =>
+            {
+                o.EnableDetailedErrors = true;
+            }).AddHubOptions<JobsityChatHub>(p =>
+            {
+                p.MaximumReceiveMessageSize = null;
+            });/*.AddAzureSignalR("Endpoint=https://jobsitychatsignalr.service.signalr.net;AccessKey=3MK68cSjeK2zMZjjqB+kj43fkmpHUCx7CDDiTjiCXL8=;Version=1.0;")*/;
 
             WebApplication app = builder.Build();
 
@@ -61,7 +68,7 @@ namespace JobsityChatAngular
             });
 
             app.UseAuthorization();
-            app.MapHub<JobsityChatHub>("/hubs/chat");
+            app.MapHub<JobsityChatHub>("/chatroom");
             app.MapControllerRoute(
                 name: "default",
                 pattern: "{controller}/{action=Index}/{id?}");
