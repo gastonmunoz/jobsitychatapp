@@ -1,6 +1,6 @@
 # Welcome to Jobsity Chat!
 
-Jobsity Chat is a chat Web app with a Chat Assistant to ask Stock values.
+Jobsity Chat is a chat Web App with a Stock Values bot.
 ![Chatroom screenshot](https://i.postimg.cc/J4f8B9vx/main.png)
 
 # App

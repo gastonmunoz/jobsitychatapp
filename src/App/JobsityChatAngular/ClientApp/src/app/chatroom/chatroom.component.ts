@@ -1,5 +1,4 @@
 import { Component, OnDestroy, OnInit } from "@angular/core";
-import { ProcessErrorArgs, ServiceBusClient, ServiceBusError, ServiceBusReceivedMessage } from "@azure/service-bus";
 import * as signalR from "@microsoft/signalr";
 import { HubConnection, HubConnectionBuilder } from "@microsoft/signalr";
 import { BehaviorSubject, Observable } from "rxjs";
@@ -42,11 +41,8 @@ import { NewMessage } from "../interfaces/newmessage.iterface";
     </div>
   `
 })
-export class ChatroomComponent implements OnInit, OnDestroy {
+export class ChatroomComponent implements OnInit {
   private userName = "";
-  private connectionString = "Endpoint=sb://josbityresponsechat.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=meVqi4gMC7ATkmfSAKH90nCYZqf1sIA0Nu1pGZDG2ok=";
-  private queueName = "jobsityresponse";
-  private sbClient: ServiceBusClient = new ServiceBusClient(this.connectionString);
   public conversationSubject = new BehaviorSubject<NewMessage[]>([{
     date: new Date(),
     message: "Bienvenido",
@@ -71,10 +67,6 @@ export class ChatroomComponent implements OnInit, OnDestroy {
     this.connection.on("LeftUser", message => this.leftUser(message));
   }
 
-  public ngOnDestroy(): void {
-    this.sbClient.close();
-  }
-
   public ngOnInit(): void {
     this.userNameObservable = this.authorizeService.getUser().pipe(map(u => u && u.name));
     this.userNameObservable.subscribe(newUserName => {
@@ -86,27 +78,6 @@ export class ChatroomComponent implements OnInit, OnDestroy {
       }).catch(error => {
         return console.error(error);
       });
-
-    this.sbClient = new ServiceBusClient(this.connectionString);
-    let receiver = this.sbClient.createReceiver(this.queueName);
-    let receiverSubscription = receiver.subscribe({
-      processMessage: async (brokeredMessage: ServiceBusReceivedMessage) => {
-        console.log(`Received message: ${brokeredMessage.body}`);
-        const newMessage: NewMessage = {
-          date: new Date(),
-          message: brokeredMessage.body.toString(),
-          userName: "Jobsity Stock Assistant",
-          groupName: this.groupName
-        };
-        this.connection.invoke("SendMessage", newMessage);
-      },
-      processError: async (args: ProcessErrorArgs) => {
-        console.log(`Error from source ${args.errorSource} occurred: `, args.error);
-        if ((args.error as ServiceBusError).code == "UnauthorizedAccess") {
-          receiverSubscription.close();
-        }
-      }
-    });
   }
 
   public join(): void {

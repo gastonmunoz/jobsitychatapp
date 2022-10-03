@@ -15,6 +15,10 @@ using JobsityChatBotFunction.Exceptions;
 using System.Text.RegularExpressions;
 using System.Collections;
 using JobsityChatBotFunction.Helpers;
+using Newtonsoft.Json.Linq;
+using Microsoft.Azure.ServiceBus;
+using Newtonsoft.Json;
+using System.Dynamic;
 
 namespace JobsityChatBotFunction
 {
@@ -29,7 +33,7 @@ namespace JobsityChatBotFunction
         /// </summary>
         /// <param name="message">Message to post</param>
         /// <exception cref="Exception"></exception>
-        private static async void PostMessageToServiceBus(string message)
+        private static async void PostMessageToServiceBus(StockMessage message)
         {
             string connString = Environment.GetEnvironmentVariable("responseQueue");
             string queueName = Environment.GetEnvironmentVariable("responseQueueName");
@@ -38,8 +42,8 @@ namespace JobsityChatBotFunction
             ServiceBusClient serviceBusClient = new(connString, clientOptions);
             ServiceBusSender sender = serviceBusClient.CreateSender(queueName);
             using ServiceBusMessageBatch messageBatch = await sender.CreateMessageBatchAsync();
-            
-            if (!messageBatch.TryAddMessage(new ServiceBusMessage(message)))
+            string json = JsonConvert.SerializeObject(message);
+            if (!messageBatch.TryAddMessage(new ServiceBusMessage(json)))
             {
                 throw new Exception($"The message {message} is too large to fit in the batch.");
             }
@@ -65,26 +69,37 @@ namespace JobsityChatBotFunction
         public static async Task Run([ServiceBusTrigger("jobsitychatqueue", Connection = "jobsityqueue")]string myQueueItem, ILogger log)
         {
             string stock = "";
+            JObject requestObj = JObject.Parse(myQueueItem);
+            StockMessage messageToPost = new()
+            {
+                Message = "",
+                GroupName = requestObj.Property("GroupName").Value.ToString()
+            };
             try
             {
-                stock = JobsityChatBotHelper.GetStockName(myQueueItem);
+                string stockName = requestObj.Property("Message").Value.ToString();
+                stock = JobsityChatBotHelper.GetStockName(stockName);
                 Stock record = JobsityChatBotHelper.GetStockFromApi(stock, new HttpClient());
                 double average = (record.High + record.Low) / 2;
-                PostMessageToServiceBus($"{record.Symbol} quote is ${average} per share");
+                messageToPost.Message = $"{record.Symbol} quote is ${average} per share.";
+                PostMessageToServiceBus(messageToPost);
             }
             catch (TypeConverterException)
             {
-                PostMessageToServiceBus($"Stock \"{stock}\" unavailable in stooq.com.");
+                messageToPost.Message = $"Stock \"{stock}\" unavailable in stooq.com.";
+                PostMessageToServiceBus(messageToPost);
             }
             catch (Exception e)
             {
-                if (e is StooqUnavailableException || e is StooqUnavailableException)
+                if (e is StooqUnavailableException || e is StooqUnavailableException || e is IncorrectSintaxException)
                 {
-                    PostMessageToServiceBus(e.Message);
+                    messageToPost.Message = e.Message;
+                    PostMessageToServiceBus(messageToPost);
                 }
                 else
                 {
-                    PostMessageToServiceBus($"Cannot query for: \"{stock}\".");
+                    messageToPost.Message = $"Cannot query for: \"{stock}\".";
+                    PostMessageToServiceBus(messageToPost);
                 }
             }
         }

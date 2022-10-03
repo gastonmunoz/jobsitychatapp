@@ -1,14 +1,21 @@
 ﻿using Azure.Messaging.ServiceBus;
+using Microsoft.Extensions.Configuration;
 using System;
 
 namespace JobsityChatBot.Helpers
 {
+    /// <summary>
+    /// Helper for JobsityChatBot
+    /// </summary>
     public static class JobsityChatBotHelper
     {
-        private static readonly string connectionString = "Endpoint=sb://jobsityqueue.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=7tU4/Sb3bmrGdO3GTegjeO3hwpWg6sC/jKtPLUs7lps=";
-        private static readonly string queueName = "jobsitychatqueue";
-
-        public async static void ProcessMessage(string message)
+        /// <summary>
+        /// Send messages to the Azure Service Bus queue
+        /// </summary>
+        /// <param name="configuration">App configuration</param>
+        /// <param name="message">Message for the bot queue</param>
+        /// <exception cref="Exception"></exception>
+        public async static void ProcessMessage(string connectionString, string queueName, string message)
         {
             string newMessage = message.Trim();
             ServiceBusClientOptions clientOptions = new() { TransportType = ServiceBusTransportType.AmqpWebSockets };

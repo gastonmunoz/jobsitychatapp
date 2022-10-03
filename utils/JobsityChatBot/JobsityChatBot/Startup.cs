@@ -6,6 +6,7 @@ using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Integration.AspNet.Core;
 using Microsoft.Bot.Connector.Authentication;
 using Microsoft.Extensions.Azure;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 
@@ -16,6 +17,13 @@ namespace JobsityChatBot
     /// </summary>
     public class Startup
     {
+        private readonly IConfiguration configuration;
+
+        public Startup(IConfiguration configuration)
+        {
+            this.configuration = configuration;
+        }
+
         /// <summary>
         /// Context configuration
         /// </summary>
@@ -37,7 +45,7 @@ namespace JobsityChatBot
             services.AddTransient<IBot, DialogAndWelcomeBot<MainDialog>>();
             services.AddAzureClients(builder =>
             {
-                builder.AddServiceBusClient("Endpoint=sb://jobsityqueue.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=7tU4/Sb3bmrGdO3GTegjeO3hwpWg6sC/jKtPLUs7lps=");
+                builder.AddServiceBusClient(configuration.GetValue<string>("azureServiceQueue"));
             });
         }
 

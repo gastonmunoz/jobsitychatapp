@@ -1,6 +1,7 @@
 using JobsityChatAngular.Data;
 using JobsityChatAngular.Hubs;
 using JobsityChatAngular.Models;
+using JobsityChatAngular.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
@@ -40,6 +41,7 @@ namespace JobsityChatAngular
             {
                 p.MaximumReceiveMessageSize = null;
             });
+            builder.Services.AddHostedService<AzureWebServiceHostedService>();
 
             WebApplication app = builder.Build();
 
