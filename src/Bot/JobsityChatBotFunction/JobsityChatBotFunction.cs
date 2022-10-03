@@ -6,101 +6,140 @@ using Microsoft.Azure.WebJobs;
 using Microsoft.Extensions.Logging;
 using System.IO;
 using CsvHelper;
-using CsvHelper.Configuration;
 using System.Threading.Tasks;
 using System.Linq;
 using JobsityChatBotFunction.Classes;
 using CsvHelper.TypeConversion;
 using Azure.Messaging.ServiceBus;
+using JobsityChatBotFunction.Exceptions;
+using System.Text.RegularExpressions;
+using System.Collections;
 
 namespace JobsityChatBotFunction
 {
+    /// <summary>
+    /// Main Azure function class
+    /// </summary>
     public class JobsityChatBotFunction
     {
-        private static readonly string connectionString = "Endpoint=sb://josbityresponsechat.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=meVqi4gMC7ATkmfSAKH90nCYZqf1sIA0Nu1pGZDG2ok=";
-        private static readonly string queueName = "jobsityresponse";
-
-        [FunctionName("jobsitychatbot")]
-        public static async Task Run([ServiceBusTrigger("jobsitychatqueue", Connection = "jobsityqueue")]string myQueueItem, ILogger log)
+        /// <summary>
+        /// Get the stock name from the user command
+        /// </summary>
+        /// <param name="message">User command</param>
+        /// <returns>Stock name</returns>
+        private static string GetStockName(string message)
         {
-            string[] parts = myQueueItem.Split("=");
-            string stock = "";
-            if (parts.Length == 2)
+            string[] parts = message.Split("=");
+            if (parts.Length >= 2)
             {
-                stock = parts[1].ToLower();
+                foreach(string word in parts)
+                {
+                    if (Regex.Match(word, "\\w+[.]\\w+").Success)
+                    {
+                        return word;
+                    }
+                }
+                throw new IncorrectSintaxException();
             }
+            throw new IncorrectSintaxException();
+        }
+
+        /// <summary>
+        /// Ask stooq.com for a stock value
+        /// </summary>
+        /// <param name="stock">Stock name</param>
+        /// <returns></returns>
+        /// <exception cref="StooqUnavailableException">Http exception</exception>
+        private static async Task<MemoryStream> GetStockValues(string stock)
+        {
             Dictionary<string, string> values = new();
             FormUrlEncodedContent content = new(values);
-
-            using HttpResponseMessage response = await new HttpClient().PostAsync($"https://stooq.com/q/l/?s={stock}&f=sd2t2ohlcv&h&e=csv", content);
-            byte[] responseContent = await response.Content.ReadAsByteArrayAsync();
-            CsvConfiguration config = new(CultureInfo.InvariantCulture)
-            {
-                NewLine = Environment.NewLine
-            };
-            MemoryStream stream = new(responseContent);
-            //using StreamReader reader = new("C:\\Users\\Gaston\\Downloads\\aapl.us.csv");
-            using StreamReader reader = new(stream);
-            using CsvReader csv = new(reader, CultureInfo.InvariantCulture);
-            
-            ServiceBusClientOptions clientOptions = new() { TransportType = ServiceBusTransportType.AmqpWebSockets };
-            ServiceBusClient serviceBusClient = new(connectionString, clientOptions);
-            ServiceBusSender sender = serviceBusClient.CreateSender(queueName);
-            using ServiceBusMessageBatch messageBatch = await sender.CreateMessageBatchAsync();
             try
             {
-                IEnumerable<Stock> records = csv.GetRecords<Stock>();
-                Stock record = records.FirstOrDefault(p => p.Symbol.ToLower() == stock);
-                double average = (record.High + record.Low) / 2;
-
-
-                if (!messageBatch.TryAddMessage(new ServiceBusMessage($"{record.Symbol} quote is ${average} per share")))
-                {
-                    throw new Exception($"The message {record.Symbol} is too large to fit in the batch.");
-                }
-
-                try
-                {
-                    await sender.SendMessagesAsync(messageBatch);
-                }
-                finally
-                {
-                    await sender.DisposeAsync();
-                    await serviceBusClient.DisposeAsync();
-                }
-            }
-            catch (TypeConverterException)
-            {
-                if (!messageBatch.TryAddMessage(new ServiceBusMessage($"Stock \"{stock}\" unavailable in stooq.com.")))
-                {
-                    throw new Exception($"The message \"Stock \"{stock}\" unavailable in stooq.com.\" is too large to fit in the batch.");
-                }
-
-                try
-                {
-                    await sender.SendMessagesAsync(messageBatch);
-                }
-                finally
-                {
-                    await sender.DisposeAsync();
-                    await serviceBusClient.DisposeAsync();
-                }
+                using HttpResponseMessage response = await new HttpClient().PostAsync($"https://stooq.com/q/l/?s={stock}&f=sd2t2ohlcv&h&e=csv", content);
+                byte[] responseContent = await response.Content.ReadAsByteArrayAsync();
+                return new MemoryStream(responseContent);
             }
             catch (Exception)
             {
-                if (!messageBatch.TryAddMessage(new ServiceBusMessage($"Cannot query for: \"{stock}\".")))
-                {
-                    throw new Exception($"The message \"Cannot query for: \"{stock}\".\" is too large to fit in the batch.");
-                }
+                throw new StooqUnavailableException();
+            }
+        }
 
-                try
+        /// <summary>
+        /// Post the bot response (stock value) to an Azure Service Bus queue
+        /// </summary>
+        /// <param name="message">Message to post</param>
+        /// <exception cref="Exception"></exception>
+        private static async void PostMessageToServiceBus(string message)
+        {
+            string connString = Environment.GetEnvironmentVariable("responseQueue");
+            string queueName = Environment.GetEnvironmentVariable("responseQueueName");
+
+            ServiceBusClientOptions clientOptions = new() { TransportType = ServiceBusTransportType.AmqpWebSockets };
+            ServiceBusClient serviceBusClient = new(connString, clientOptions);
+            ServiceBusSender sender = serviceBusClient.CreateSender(queueName);
+            using ServiceBusMessageBatch messageBatch = await sender.CreateMessageBatchAsync();
+            
+            if (!messageBatch.TryAddMessage(new ServiceBusMessage(message)))
+            {
+                throw new Exception($"The message {message} is too large to fit in the batch.");
+            }
+            try
+            {
+                await sender.SendMessagesAsync(messageBatch);
+            }
+            finally
+            {
+                await sender.DisposeAsync();
+                await serviceBusClient.DisposeAsync();
+            }
+        }
+
+        /// <summary>
+        /// Calls the stooq.com API and parse the CSV to a Stock object
+        /// </summary>
+        /// <param name="stock">Stock name</param>
+        /// <returns>Stock object</returns>
+        private static Stock GetStockFromApi(string stock)
+        {
+            using StreamReader reader = new(GetStockValues(stock).Result);
+            using CsvReader csv = new(reader, CultureInfo.InvariantCulture);
+            IEnumerable<Stock> records = csv.GetRecords<Stock>();
+            return records.FirstOrDefault(p => p.Symbol.ToLower() == stock);
+        }
+
+        /// <summary>
+        /// Azure function method
+        /// </summary>
+        /// <param name="myQueueItem">Value received from the Azure ServiceBus trigger</param>
+        /// <param name="log">Logger</param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
+        [FunctionName("jobsitychatbot")]
+        public static async Task Run([ServiceBusTrigger("jobsitychatqueue", Connection = "jobsityqueue")]string myQueueItem, ILogger log)
+        {
+            string stock = "";
+            try
+            {
+                stock = GetStockName(myQueueItem);
+                Stock record = GetStockFromApi(stock);
+                double average = (record.High + record.Low) / 2;
+                PostMessageToServiceBus($"{record.Symbol} quote is ${average} per share");
+            }
+            catch (TypeConverterException)
+            {
+                PostMessageToServiceBus($"Stock \"{stock}\" unavailable in stooq.com.");
+            }
+            catch (Exception e)
+            {
+                if (e is StooqUnavailableException || e is StooqUnavailableException)
                 {
-                    await sender.SendMessagesAsync(messageBatch);
+                    PostMessageToServiceBus(e.Message);
                 }
-                finally
+                else
                 {
-                    await sender.DisposeAsync();
-                    await serviceBusClient.DisposeAsync();
+                    PostMessageToServiceBus($"Cannot query for: \"{stock}\".");
                 }
             }
         }
