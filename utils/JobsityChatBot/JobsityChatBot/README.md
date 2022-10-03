@@ -13,8 +13,7 @@ JobsityChatBot is a chatroom bot for ask Stocks
   dotnet --version
   ```
 
-- If you don't have an Azure subscription, create a [free account](https://azure.microsoft.com/free/).
-- Install the latest version of the [Azure CLI](https://docs.microsoft.com/cli/azure/install-azure-cli?view=azure-cli-latest) tool. Version 2.0.54 or higher.
+- If you don't have a Bot Framework Emulator, you can [Install Bot Framework Emulator](https://github.com/Microsoft/BotFramework-Emulator/blob/master/README.md).
 
 ## To try this sample
 
@@ -42,3 +41,17 @@ JobsityChatBot is a chatroom bot for ask Stocks
   - Select `JobsityChatBot.csproj` file
   - Press `F5` to run the project
 
+- Copy the port number in the line before Application started. Press CTRL+C to shut down.
+
+  ```bash
+  Now listening on: http://localhost:3978
+  Application started. Press Ctrl+C to shut down.
+  ```
+
+- Open the Bot Framework Emulator, press Open Bot and paste the bot URL endpoint.
+  
+  ```bash
+  http://localhost:3978/api/messages
+  ```
+
+- Type /stock=AAPL.US and the bot will ask stooq.com for the current values of Apple stock
