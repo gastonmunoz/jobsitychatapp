@@ -3,6 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace JobsityChatAngular.Controllers
 {
+    /// <summary>
+    /// Identity controller
+    /// </summary>
     public class OidcConfigurationController : Controller
     {
         private readonly ILogger<OidcConfigurationController> _logger;
@@ -15,12 +18,20 @@ namespace JobsityChatAngular.Controllers
             _logger = logger;
         }
 
+        /// <summary>
+        /// Parameters for the authentication request
+        /// </summary>
         public IClientRequestParametersProvider ClientRequestParametersProvider { get; }
 
+        /// <summary>
+        /// Returns parameters for the authentication request
+        /// </summary>
+        /// <param name="clientId">Client identification</param>
+        /// <returns></returns>
         [HttpGet("_configuration/{clientId}")]
         public IActionResult GetClientRequestParameters([FromRoute] string clientId)
         {
-            var parameters = ClientRequestParametersProvider.GetClientParameters(HttpContext, clientId);
+            IDictionary<string, string> parameters = ClientRequestParametersProvider.GetClientParameters(HttpContext, clientId);
             return Ok(parameters);
         }
     }
