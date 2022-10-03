@@ -65,6 +65,8 @@ namespace JobsityChatAngular
                     .AllowAnyMethod()
                     .AllowCredentials()
                     .WithOrigins("https://localhost:7234", "https://localhost:44477");
+                //.WithOrigins("https://jobsitychatangular20221002225745.azurewebsites.net:7234", "https://jobsitychatangular20221002225745.azurewebsites.net:44477");
+
             });
 
             app.UseAuthorization();

@@ -28,7 +28,8 @@ export class ChatroomComponent implements OnInit, OnDestroy {
   private connection: HubConnection;
 
   constructor(private authorizeService: AuthorizeService) {
-    let apiBaseUrl = "https://localhost:7234";
+    //let apiBaseUrl = "https://localhost:7234";
+    let apiBaseUrl = "https://jobsitychatangular20221002225745.azurewebsites.net";
     //let apiBaseUrl = "https://jobsitychatsignalr.service.signalr.net";
     this.connection = new HubConnectionBuilder()
       //.withUrl("https://localhost:7234/jobsitychatsignalr")
