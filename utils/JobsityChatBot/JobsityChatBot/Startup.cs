@@ -11,8 +11,15 @@ using Microsoft.Extensions.Hosting;
 
 namespace JobsityChatBot
 {
+    /// <summary>
+    /// Class for Bot context configuration
+    /// </summary>
     public class Startup
     {
+        /// <summary>
+        /// Context configuration
+        /// </summary>
+        /// <param name="services">Collection of services</param>
         public void ConfigureServices(IServiceCollection services)
         {
             services.AddHttpClient().AddControllers().AddNewtonsoftJson(options =>
@@ -34,6 +41,11 @@ namespace JobsityChatBot
             });
         }
 
+        /// <summary>
+        /// Bot configuration
+        /// </summary>
+        /// <param name="app">Web Application</param>
+        /// <param name="env">Host environment</param>
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
             if (env.IsDevelopment())

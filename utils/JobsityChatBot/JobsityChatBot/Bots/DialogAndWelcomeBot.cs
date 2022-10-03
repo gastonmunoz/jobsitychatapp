@@ -1,9 +1,4 @@
-﻿// Copyright (c) Microsoft Corporation. All rights reserved.
-// Licensed under the MIT License.
-//
-// Generated with Bot Builder V4 SDK Template for Visual Studio CoreBot v4.16.0
-
-using Microsoft.Bot.Builder;
+﻿using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Schema;
 using Microsoft.Extensions.Logging;
@@ -16,6 +11,10 @@ using System.Threading.Tasks;
 
 namespace JobsityChatBot.Bots
 {
+    /// <summary>
+    /// Welcome and bot commands
+    /// </summary>
+    /// <typeparam name="T"></typeparam>
     public class DialogAndWelcomeBot<T> : DialogBot<T>
         where T : Dialog
     {
@@ -24,39 +23,41 @@ namespace JobsityChatBot.Bots
         {
         }
 
+        /// <summary>
+        /// Messages for user's welcome
+        /// </summary>
+        /// <param name="membersAdded"></param>
+        /// <param name="turnContext"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
         protected override async Task OnMembersAddedAsync(IList<ChannelAccount> membersAdded, ITurnContext<IConversationUpdateActivity> turnContext, CancellationToken cancellationToken)
         {
-            foreach (var member in membersAdded)
+            foreach (IMessageActivity response in from ChannelAccount member in membersAdded
+                where member.Id != turnContext.Activity.Recipient.Id
+                let welcomeCard = CreateAdaptiveCardAttachment()
+                let response = MessageFactory.Attachment(welcomeCard, ssml: "Welcome to Jobsity Chat!")
+                select response)
             {
-                // Greet anyone that was not the target (recipient) of this message.
-                // To learn more about Adaptive Cards, see https://aka.ms/msbot-adaptivecards for more details.
-                if (member.Id != turnContext.Activity.Recipient.Id)
-                {
-                    var welcomeCard = CreateAdaptiveCardAttachment();
-                    var response = MessageFactory.Attachment(welcomeCard, ssml: "Welcome to Jobsity Chat!");
-                    await turnContext.SendActivityAsync(response, cancellationToken);
-                    await Dialog.RunAsync(turnContext, ConversationState.CreateProperty<DialogState>("DialogState"), cancellationToken);
-                }
+                await turnContext.SendActivityAsync(response, cancellationToken);
+                await Dialog.RunAsync(turnContext, ConversationState.CreateProperty<DialogState>("DialogState"), cancellationToken);
             }
         }
 
-        // Load attachment from embedded resource.
+        /// <summary>
+        /// Load attachment from embedded resource.
+        /// </summary>
+        /// <returns></returns>
         private Attachment CreateAdaptiveCardAttachment()
         {
-            var cardResourcePath = GetType().Assembly.GetManifestResourceNames().First(name => name.EndsWith("welcomeCard.json"));
-
-            using (var stream = GetType().Assembly.GetManifestResourceStream(cardResourcePath))
+            string cardResourcePath = GetType().Assembly.GetManifestResourceNames().First(name => name.EndsWith("welcomeCard.json"));
+            using Stream stream = GetType().Assembly.GetManifestResourceStream(cardResourcePath);
+            using StreamReader reader = new(stream);
+            string adaptiveCard = reader.ReadToEnd();
+            return new Attachment()
             {
-                using (var reader = new StreamReader(stream))
-                {
-                    var adaptiveCard = reader.ReadToEnd();
-                    return new Attachment()
-                    {
-                        ContentType = "application/vnd.microsoft.card.adaptive",
-                        Content = JsonConvert.DeserializeObject(adaptiveCard, new JsonSerializerSettings { MaxDepth = null }),
-                    };
-                }
-            }
+                ContentType = "application/vnd.microsoft.card.adaptive",
+                Content = JsonConvert.DeserializeObject(adaptiveCard, new JsonSerializerSettings { MaxDepth = null }),
+            };
         }
     }
 }
