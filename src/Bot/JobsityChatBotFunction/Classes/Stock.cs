@@ -2,6 +2,9 @@
 
 namespace JobsityChatBotFunction.Classes
 {
+    /// <summary>
+    /// Stock class for mapping the Stooq.com values
+    /// </summary>
     public class Stock
     {
         [Name("Symbol")]
