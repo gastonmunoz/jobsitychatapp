@@ -2,6 +2,7 @@
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Dialogs;
 using Microsoft.Bot.Schema;
+using Microsoft.Extensions.Configuration;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -12,9 +13,12 @@ namespace JobsityChatBot.Dialogs
     /// </summary>
     public class StockDialog : ComponentDialog
     {
-        public StockDialog()
+        private readonly IConfiguration configuration;
+
+        public StockDialog(IConfiguration configuration)
             : base(nameof(StockDialog))
         {
+            this.configuration = configuration;
             AddDialog(new TextPrompt(nameof(TextPrompt)));
             AddDialog(new ConfirmPrompt(nameof(ConfirmPrompt)));
 
@@ -36,8 +40,8 @@ namespace JobsityChatBot.Dialogs
         /// <returns></returns>
         private async Task<DialogTurnResult> ReadStockFromServiceBusAsync(WaterfallStepContext stepContext, CancellationToken cancellationToken)
         {
-            string connString = "Endpoint=sb://josbityresponsechat.servicebus.windows.net/;SharedAccessKeyName=RootManageSharedAccessKey;SharedAccessKey=meVqi4gMC7ATkmfSAKH90nCYZqf1sIA0Nu1pGZDG2ok=";
-            string queueName = "jobsityresponse";
+            string connString = configuration.GetValue<string>("azureServiceResponse");
+            string queueName = configuration.GetValue<string>("queueName");
             await using ServiceBusClient client = new(connString);
             ServiceBusReceiver receiver = client.CreateReceiver(queueName);
 

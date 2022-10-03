@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using JobsityChatBot.Helpers;
+using Microsoft.Extensions.Configuration;
 
 namespace JobsityChatBot.Dialogs
 {
@@ -16,10 +17,12 @@ namespace JobsityChatBot.Dialogs
     {
         private readonly ILogger _logger;
         private static readonly HttpClient client = new();
+        private readonly IConfiguration configuration;
 
-        public MainDialog(StockDialog bookingDialog, ILogger<MainDialog> logger)
+        public MainDialog(StockDialog bookingDialog, ILogger<MainDialog> logger, IConfiguration configuration)
             : base(nameof(MainDialog))
         {
+            this.configuration = configuration;
             _logger = logger;
             AddDialog(new TextPrompt(nameof(TextPrompt)));
             AddDialog(bookingDialog);
@@ -57,7 +60,9 @@ namespace JobsityChatBot.Dialogs
             string message = stepContext.Result.ToString();
             if (message.Trim().StartsWith("/stock="))
             {
-                JobsityChatBotHelper.ProcessMessage(message);
+                string connectionString = configuration.GetValue<string>("azureServiceQueue");
+                string queueName = configuration.GetValue<string>("jobsityQueueName");
+                JobsityChatBotHelper.ProcessMessage(connectionString, queueName, message);
             }
             
             return await stepContext.BeginDialogAsync(nameof(StockDialog), null, cancellationToken);

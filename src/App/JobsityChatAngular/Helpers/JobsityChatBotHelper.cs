@@ -1,4 +1,6 @@
 ﻿using Azure.Messaging.ServiceBus;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 
 namespace JobsityChatAngular.Helpers
 {
@@ -13,19 +15,23 @@ namespace JobsityChatAngular.Helpers
         /// <param name="configuration">App configuration</param>
         /// <param name="message">Message for the bot queue</param>
         /// <exception cref="Exception"></exception>
-        public async static void ProcessMessage(IConfiguration configuration, string message)
+        public async static void ProcessMessage(IConfiguration configuration, string message, string groupName)
         {
             string connectionString = configuration.GetValue<string>("jobsityQueue");
             string queueName = configuration.GetValue<string>("jobsityQueueName");
-            string newMessage = message.Trim();
+            dynamic messageToPost = new
+            {
+                Message = message.Trim(),
+                GroupName = groupName
+            };
             ServiceBusClientOptions clientOptions = new() { TransportType = ServiceBusTransportType.AmqpWebSockets };
             ServiceBusClient serviceBusClient = new(connectionString, clientOptions);
             ServiceBusSender sender = serviceBusClient.CreateSender(queueName);
             using ServiceBusMessageBatch messageBatch = await sender.CreateMessageBatchAsync();
                 
-            if (!messageBatch.TryAddMessage(new ServiceBusMessage(newMessage)))
+            if (!messageBatch.TryAddMessage(new ServiceBusMessage(JsonConvert.SerializeObject(messageToPost))))
             {
-                throw new Exception($"The message {newMessage} is too large to fit in the batch.");
+                throw new Exception($"The message {messageToPost.message} is too large to fit in the batch.");
             }
 
             try

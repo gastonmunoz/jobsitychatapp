@@ -49,7 +49,7 @@ namespace JobsityChatAngular.Hubs
         {
             if (message.Message.Trim().ToLowerInvariant().StartsWith("/stock="))
             {
-                JobsityChatBotHelper.ProcessMessage(configuration, message.Message);
+                JobsityChatBotHelper.ProcessMessage(configuration, message.Message, message.GroupName);
             }
             await Clients.Group(message.GroupName).SendAsync("NewMessage", message);
         }

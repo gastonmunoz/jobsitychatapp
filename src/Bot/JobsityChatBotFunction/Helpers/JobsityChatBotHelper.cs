@@ -69,7 +69,7 @@ namespace JobsityChatBotFunction.Helpers
             using StreamReader reader = new(GetStockValues(stock, httpClient).Result);
             using CsvReader csv = new(reader, CultureInfo.InvariantCulture);
             IEnumerable<Stock> records = csv.GetRecords<Stock>();
-            return records.FirstOrDefault(p => p.Symbol.ToLower() == stock);
+            return records.FirstOrDefault(p => p.Symbol.ToLower() == stock.ToLower());
         }
     }
 }
