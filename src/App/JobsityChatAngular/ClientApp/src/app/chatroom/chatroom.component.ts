@@ -109,7 +109,7 @@ export class ChatroomComponent implements OnInit {
   private addMessageToConversation(message: NewMessage): void {
     let originalConv = this.conversationSubject.getValue();
     originalConv.push(message);
-    let newConv = originalConv.slice(Math.max(originalConv.length - 10, 0));
+    let newConv = originalConv.slice(Math.max(originalConv.length - 50, 0));
     this.conversationSubject.next(newConv);
   }
 
